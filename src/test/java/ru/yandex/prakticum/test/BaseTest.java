@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import ru.yandex.prakticum.constant.Endpoints;
 import ru.yandex.prakticum.api.UserClient;
 import ru.yandex.prakticum.constant.LoginSource;
 import ru.yandex.prakticum.generator.UserDataFactory;
@@ -20,6 +21,9 @@ import ru.yandex.prakticum.page.ProfilePage;
 import java.io.File;
 import java.time.Duration;
 
+/**
+ * Базовый класс для UI-тестов
+ */
 public abstract class BaseTest {
     protected WebDriver driver;
     protected MainPage mainPage;
@@ -32,33 +36,22 @@ public abstract class BaseTest {
     protected UserData user;
     protected String accessToken;
 
-    private static final String BASE_URL = "https://stellarburgers.nomoreparties.site/";
-
     @Before
     public void setUp() {
         String browser = System.getProperty("browser", "chrome");
         ChromeOptions options = new ChromeOptions();
 
         if ("yandex".equalsIgnoreCase(browser)) {
-            String[] possiblePaths = {
-                    "/Applications/Yandex.app/Contents/MacOS/Yandex",
+            // настройки Yandex Browser
+            String[] paths = {"/Applications/Yandex.app/Contents/MacOS/Yandex",
                     "C:\\Users\\%USERNAME%\\AppData\\Local\\Yandex\\YandexBrowser\\Application\\browser.exe",
-                    "/usr/bin/yandex-browser",
-            };
+                    "/usr/bin/yandex-browser"};
             boolean found = false;
-            for (String path : possiblePaths) {
-                File binary = new File(path);
-                if (binary.exists()) {
-                    options.setBinary(binary);
-                    found = true;
-                    break;
-                }
+            for (String path : paths) {
+                File bin = new File(path);
+                if (bin.exists()) { options.setBinary(bin); found = true; break; }
             }
-            if (!found) {
-                throw new RuntimeException(
-                        "Не удалось найти исполняемый файл Яндекс.Браузера. Установите браузер или укажите путь вручную."
-                );
-            }
+            if (!found) throw new RuntimeException("Не найден Yandex Browser");
         } else {
             WebDriverManager.chromedriver().setup();
         }
@@ -66,43 +59,35 @@ public abstract class BaseTest {
         driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
         driver.manage().window().maximize();
-        driver.get(BASE_URL);
+        driver.get(Endpoints.BASE_URI);
 
         mainPage     = new MainPage(driver);
         loginPage    = new LoginPage(driver);
         registerPage = new RegisterPage(driver);
         recoveryPage = new RecoveryPage(driver);
         profilePage  = new ProfilePage(driver);
+        userClient   = new UserClient();
 
-        userClient = new UserClient();
-
+        // создаём пользователя через API, если не RegisterTest
         if (!(this instanceof RegisterTest)) {
             user = UserDataFactory.generateValidUser();
-            accessToken = userClient.create(user)
-                    .extract()
-                    .path("accessToken");
+            accessToken = userClient.create(user).extract().path("accessToken");
         }
     }
 
     @After
     public void tearDown() {
-        if (accessToken != null) {
-            userClient.delete(accessToken);
-        }
-        if (driver != null) {
-            driver.quit();
-        }
+        if (accessToken != null) userClient.delete(accessToken);
+        if (driver != null) driver.quit();
     }
 
     @Step("Открытие формы логина через: {source}")
     public void openLoginForm(LoginSource source) {
         switch (source) {
             case HOME_PAGE:
-                mainPage.clickLoginButton();
-                break;
+                mainPage.clickLoginButton(); break;
             case PERSONAL_ACCOUNT:
-                mainPage.clickPersonalAccount();
-                break;
+                mainPage.clickPersonalAccount(); break;
             case REGISTER_FORM:
                 mainPage.clickPersonalAccount();
                 loginPage.waitForLoginPageToLoad();

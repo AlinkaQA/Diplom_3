@@ -1,24 +1,25 @@
 package ru.yandex.prakticum.test;
 
-import io.qameta.allure.Step;
+import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
 import org.junit.Test;
+import io.qameta.allure.Step;
+
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ * Тест перехода в Личный кабинет
+ */
 public class PersonalAccountTest extends BaseTest {
-
     @Test
-    @DisplayName("Переход в Личный кабинет авторизованным пользователем")
+    @DisplayName("Переход в ЛК авторизованным пользователем")
+    @Description("Проверяет наличие /account в URL после входа и клика")
     public void shouldGoToPersonalAccountAfterLogin() {
         login();
-
-        mainPage.clickPersonalAccount(); // второй клик — переход в ЛК
-
+        mainPage.clickPersonalAccount();
         profilePage.waitForProfilePageToLoad();
-
-        String currentUrl = driver.getCurrentUrl();
-        assertTrue("URL не содержит '/account'", currentUrl.contains("/account"));
+        assertTrue(driver.getCurrentUrl().contains("/account"));
     }
 
     @Step("Авторизация пользователя")
