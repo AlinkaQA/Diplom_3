@@ -1,7 +1,7 @@
 package ru.yandex.prakticum.test;
 
+import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,17 +9,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import ru.yandex.prakticum.constant.Endpoints;
 import ru.yandex.prakticum.constant.SectionName;
 import ru.yandex.prakticum.page.MainPage;
 
 import static org.junit.Assert.assertTrue;
-import static ru.yandex.prakticum.constant.SectionName.*;
 
-@Slf4j
+/**
+ * Параметризованный тест конструктора
+ */
 @RunWith(Parameterized.class)
 public class ConstructorTest {
-
-    private static final String SITE = "https://stellarburgers.nomoreparties.site";
     private WebDriver driver;
     private MainPage mainPage;
     private final SectionName sectionName;
@@ -28,44 +28,31 @@ public class ConstructorTest {
         this.sectionName = sectionName;
     }
 
-    @Parameterized.Parameters
-    public static Object[][] getParameters() {
-        return new Object[][]{
-                {BUN},
-                {SAUCE},
-                {FILLING}
-        };
+    @Parameterized.Parameters(name = "Секция конструктора: {0}")
+    public static Object[][] data() {
+        return new Object[][]{{SectionName.BUN}, {SectionName.SAUCE}, {SectionName.FILLING}};
     }
 
     @Before
     public void setUp() {
         driver = new ChromeDriver();
         mainPage = new MainPage(driver);
-        driver.get(SITE);
+        driver.get(Endpoints.BASE_URI);
         mainPage.waitForConstructorToLoad();
     }
 
     @After
-    public void tearDown() {
-        driver.quit();
-    }
+    public void tearDown() { driver.quit(); }
 
     @Test
     @DisplayName("Переход по разделам конструктора")
+    @Description("Проверяет, что вкладка активируется при клике")
     public void shouldSwitchConstructorSection() {
-        // Если секция уже активна (например, Булки по умолчанию), переключаемся на другую, чтобы сбросить состояние
-        if (sectionName == BUN) {
-            mainPage.clickSection(SAUCE);
-        } else {
-            mainPage.clickSection(BUN);
-        }
+        if (sectionName == SectionName.BUN) mainPage.clickSection(SectionName.SAUCE);
+        else mainPage.clickSection(SectionName.BUN);
 
-        // Теперь кликаем по нужной секции
         mainPage.clickSection(sectionName);
-
-        // Получаем класс и проверяем, что таб стал активным
-        String actualClass = mainPage.getClassName(sectionName);
-        assertTrue("Секция не стала активной: " + sectionName,
-                actualClass.contains("tab_tab_type_current__2BEPc"));
+        String cls = mainPage.getClassName(sectionName);
+        assertTrue("Секция не активна: " + sectionName, cls.contains("tab_tab_type_current__2BEPc"));
     }
 }

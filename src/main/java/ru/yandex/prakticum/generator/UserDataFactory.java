@@ -3,6 +3,9 @@ package ru.yandex.prakticum.generator;
 import org.apache.commons.lang3.RandomStringUtils;
 import ru.yandex.prakticum.model.UserData;
 
+/**
+ * Генератор тестовых данных пользователя
+ */
 public class UserDataFactory {
 
     public static UserData generateValidUser() {
